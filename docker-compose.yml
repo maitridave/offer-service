@@ -1,9 +1,45 @@
-version: '3.8'
-
 services:
+  # Infrastructure Services
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    container_name: automotive-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    networks:
+      - automotive-network
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.1
+    container_name: automotive-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - automotive-network
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
+    container_name: automotive-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -12,26 +48,209 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - automotive-network
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    restart: unless-stopped
 
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: automotive-sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Developer
+    networks:
+      - automotive-network
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong@Passw0rd" -Q "SELECT 1"
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  # Database Initialization
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - automotive-network
+    volumes:
+      - ./db-init:/scripts
+    command: >
+      /bin/bash -c "
+      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P 'YourStrong@Passw0rd' -Q 'CREATE DATABASE AICodeChallenge2025' &&
+      echo 'Database created successfully'
+      "
+
+  # Microservices
   offer-service:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: offer-service
+    container_name: automotive-offer-service
     ports:
-      - "5001:8080"
+      - "5001:5001"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Data Source=192.168.2.97\\MSSQLSERVER;Initial Catalog=AICodeChallenge2025;User ID=remote_user;Password=xi(w1rMbvhMA;TrustServerCertificate=True
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AICodeChallenge2025;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=guest
       - RabbitMQ__Password=guest
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     networks:
       - automotive-network
+    restart: unless-stopped
+
+  purchase-service:
+    build:
+      context: C:/Users/Shivani Yadav/Desktop/purchase-service
+      dockerfile: Dockerfile
+    container_name: automotive-purchase-service
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5002
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AICodeChallenge2025;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - automotive-network
+    restart: unless-stopped
+
+  search-service:
+    build:
+      context: C:/Users/Shivani Yadav/Desktop/search-service
+      dockerfile: Dockerfile
+    container_name: automotive-search-service
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5003
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AICodeChallenge2025;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - Elasticsearch__Url=http://elasticsearch:9200
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - automotive-network
+    restart: unless-stopped
+
+  transport-service:
+    build:
+      context: C:/Users/Shivani Yadav/Desktop/transport-service
+      dockerfile: Dockerfile
+    container_name: automotive-transport-service
+    ports:
+      - "5004:5004"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5004
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AICodeChallenge2025;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - automotive-network
+    restart: unless-stopped
+
+  # Frontend Application
+  frontend:
+    build:
+      context: C:/Users/Shivani Yadav/Desktop/centralized-search-frontend
+      dockerfile: Dockerfile
+    container_name: automotive-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_OFFER_SERVICE_URL=http://localhost:5001
+      - VITE_PURCHASE_SERVICE_URL=http://localhost:5002
+      - VITE_TRANSPORT_SERVICE_URL=http://localhost:5004
+      - VITE_SEARCH_SERVICE_URL=http://localhost:5003
+    depends_on:
+      - offer-service
+      - purchase-service
+      - transport-service
+      - search-service
+    networks:
+      - automotive-network
+    restart: unless-stopped
+
+  # Load Testing Service (Optional - use --profile testing to run)
+  load-tester:
+    build:
+      context: ./automation-scripts
+      dockerfile: Dockerfile
+    container_name: automotive-load-tester
+    environment:
+      - OFFER_SERVICE_URL=http://offer-service:5001
+      - PURCHASE_SERVICE_URL=http://purchase-service:5002
+      - TRANSPORT_SERVICE_URL=http://transport-service:5004
+      - SEARCH_SERVICE_URL=http://search-service:5003
+    depends_on:
+      - offer-service
+      - purchase-service
+      - transport-service
+      - search-service
+    networks:
+      - automotive-network
+    profiles: ["testing"]
+    volumes:
+      - ./automation-scripts/logs:/app/logs
 
 networks:
   automotive-network:
     driver: bridge
+
+volumes:
+  elasticsearch_data:
+  rabbitmq_data:
+  sqlserver_data:
