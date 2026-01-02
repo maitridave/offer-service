@@ -300,8 +300,8 @@ Creates a new offer and automatically manages the associated vehicle.
   "state": "CA",
   "country": "USA",
   "status": "OPEN",
-  "created_at": "2026-01-02T18:00:00Z",
-  "last_modified_at": "2026-01-02T18:00:00Z",
+  "created_at": "2024-01-02T18:00:00Z",
+  "last_modified_at": "2024-01-02T18:00:00Z",
   "vehicle": {
     "id": 1,
     "make": "Tesla",
@@ -331,8 +331,8 @@ Retrieves a specific offer by its ID.
   "state": "CA",
   "country": "USA",
   "status": "OPEN",
-  "created_at": "2026-01-02T18:00:00Z",
-  "last_modified_at": "2026-01-02T18:00:00Z",
+  "created_at": "2024-01-02T18:00:00Z",
+  "last_modified_at": "2024-01-02T18:00:00Z",
   "vehicle": {
     "id": 1,
     "make": "Tesla",
@@ -366,8 +366,8 @@ Lists all offers with optional filtering by seller ID.
     "state": "CA",
     "country": "USA",
     "status": "OPEN",
-    "created_at": "2026-01-02T18:00:00Z",
-    "last_modified_at": "2026-01-02T18:00:00Z",
+    "created_at": "2024-01-02T18:00:00Z",
+    "last_modified_at": "2024-01-02T18:00:00Z",
     "vehicle": {
       "id": 1,
       "make": "Tesla",
@@ -411,8 +411,8 @@ Updates an existing offer.
   "state": "CA",
   "country": "USA",
   "status": "SOLD",
-  "created_at": "2026-01-02T18:00:00Z",
-  "last_modified_at": "2026-01-02T18:30:00Z",
+  "created_at": "2024-01-02T18:00:00Z",
+  "last_modified_at": "2024-01-02T18:30:00Z",
   "vehicle": {
     "id": 1,
     "make": "Tesla",
@@ -485,7 +485,7 @@ When a new offer is created, an `OfferCreatedEvent` is published to RabbitMQ wit
   "state": "CA",
   "country": "USA",
   "status": "OPEN",
-  "created_at": "2026-01-02T18:00:00Z",
+  "created_at": "2024-01-02T18:00:00Z",
   "vin": "5YJ3E1EA1KF123456"
 }
 ```
