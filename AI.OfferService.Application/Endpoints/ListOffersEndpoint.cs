@@ -22,6 +22,11 @@ public class ListOffersEndpoint : Endpoint<ListOffersRequest, List<OfferResponse
     {
         Get("/offers");
         AllowAnonymous();
+        Summary(s => {
+            s.Summary = "List all offers";
+            s.Description = "Retrieves a list of offers, optionally filtered by seller ID";
+            s.ExampleRequest = new ListOffersRequest { SellerId = 1 };
+        });
     }
 
     public override async Task HandleAsync(ListOffersRequest req, CancellationToken ct)

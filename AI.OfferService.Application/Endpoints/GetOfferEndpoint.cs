@@ -17,6 +17,10 @@ public class GetOfferEndpoint : EndpointWithoutRequest<OfferResponse>
     {
         Get("/offers/{id}");
         AllowAnonymous();
+        Summary(s => {
+            s.Summary = "Get an offer by ID";
+            s.Description = "Retrieves a specific offer using its unique identifier";
+        });
     }
 
     public override async Task HandleAsync(CancellationToken ct)

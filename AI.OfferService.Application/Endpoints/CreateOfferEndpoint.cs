@@ -29,9 +29,21 @@ public class CreateOfferEndpoint : Endpoint<CreateOfferRequest, OfferResponse>
     {
         Post("/offers");
         AllowAnonymous();
-        Description(x => x
-            .WithName("CreateOffer")
-            .WithSummary("Create a new offer"));
+        Summary(s => {
+            s.Summary = "Create a new offer";
+            s.Description = "Creates a new vehicle offer with seller, buyer, and carrier information";
+            s.ExampleRequest = new CreateOfferRequest
+            {
+                VIN = "1HGCM82633A123456",
+                Make = "Honda",
+                Model = "Accord",
+                Year = 2023,
+                SellerId = 1,
+                BuyerId = 2,
+                CarrierId = 3,
+                OfferAmount = 25000.00m
+            };
+        });
     }
 
     public override async Task HandleAsync(CreateOfferRequest req, CancellationToken ct)

@@ -11,7 +11,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add FastEndpoints
 builder.Services.AddFastEndpoints();
-builder.Services.SwaggerDocument();
+
+// Add FastEndpoints Swagger
+builder.Services.SwaggerDocument(o =>
+{
+    o.DocumentSettings = s =>
+    {
+        s.DocumentName = "v1";
+        s.Title = "Offer Service API";
+        s.Version = "v1.0";
+        s.Description = "API for managing vehicle offers";
+    };
+});
 
 // Add DbContext
 builder.Services.AddDbContext<OfferDbContext>(options =>
@@ -33,10 +44,7 @@ else
 
 var app = builder.Build();
 
-// Configure Swagger
-app.UseSwaggerGen();
-
-// Configure FastEndpoints
+// Configure FastEndpoints (this must be before Swagger)
 app.UseFastEndpoints(c =>
 {
     c.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
@@ -48,5 +56,8 @@ app.UseFastEndpoints(c =>
         ep.AllowAnonymous();
     };
 });
+
+// Configure FastEndpoints Swagger UI
+app.UseSwaggerGen(); // This generates the swagger docs and serves the UI
 
 app.Run();

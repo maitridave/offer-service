@@ -16,6 +16,10 @@ public class DeleteOfferEndpoint : EndpointWithoutRequest
     {
         Delete("/offers/{id}");
         AllowAnonymous();
+        Summary(s => {
+            s.Summary = "Delete an offer";
+            s.Description = "Deletes an offer by its unique identifier";
+        });
     }
 
     public override async Task HandleAsync(CancellationToken ct)

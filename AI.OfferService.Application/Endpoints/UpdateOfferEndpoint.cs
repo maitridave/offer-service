@@ -22,6 +22,16 @@ public class UpdateOfferEndpoint : Endpoint<UpdateOfferRequest, OfferResponse>
     {
         Put("/offers/{id}");
         AllowAnonymous();
+        Summary(s => {
+            s.Summary = "Update an existing offer";
+            s.Description = "Updates an existing offer with new information";
+            s.ExampleRequest = new UpdateOfferRequest
+            {
+                OfferAmount = 26000.00m,
+                BuyerId = 3,
+                CarrierId = 4
+            };
+        });
     }
 
     public override async Task HandleAsync(UpdateOfferRequest req, CancellationToken ct)
