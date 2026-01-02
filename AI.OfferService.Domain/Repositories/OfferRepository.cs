@@ -47,7 +47,7 @@ public class OfferRepository : IOfferRepository
     {
         var existing = await _context.Offers.FindAsync(offer.Id);
         if (existing == null) return null;
-
+        existing.SellerId = offer.SellerId;
         existing.BuyerId = offer.BuyerId;
         existing.CarrierId = offer.CarrierId;
         existing.OfferAmount = offer.OfferAmount;
