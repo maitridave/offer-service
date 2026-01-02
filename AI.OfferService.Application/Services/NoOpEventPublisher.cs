@@ -12,10 +12,9 @@ public class NoOpEventPublisher : IEventPublisher
         _logger = logger;
     }
 
-    public Task PublishAsync<T>(T eventMessage, string routingKey) where T : class
+    public Task PublishAsync<T>(T eventMessage) where T : class
     {
-        _logger.LogInformation("Event publishing disabled. Would have published {EventType} with routing key {RoutingKey}", 
-            typeof(T).Name, routingKey);
+        _logger.LogInformation("Event publishing disabled. Would have published {EventType}", typeof(T).Name);
         return Task.CompletedTask;
     }
 }

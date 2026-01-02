@@ -87,7 +87,7 @@ public class UpdateOfferEndpoint : Endpoint<UpdateOfferRequest, OfferResponse>
             VIN = updated.Vehicle?.VIN ?? string.Empty
         };
 
-        await _eventPublisher.PublishAsync(offerEvent, "offer.updated");
+        await _eventPublisher.PublishAsync(offerEvent);
 
         var response = new OfferResponse
         {

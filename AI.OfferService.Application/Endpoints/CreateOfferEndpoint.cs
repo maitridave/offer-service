@@ -105,7 +105,7 @@ public class CreateOfferEndpoint : Endpoint<CreateOfferRequest, OfferResponse>
             VIN = vehicle.VIN
         };
 
-        await _eventPublisher.PublishAsync(offerEvent, "offer.created");
+        await _eventPublisher.PublishAsync(offerEvent);
 
         var response = new OfferResponse
         {

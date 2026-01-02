@@ -1,55 +1,30 @@
-using RabbitMQ.Client;
-using Newtonsoft.Json;
-using System.Text;
-using Microsoft.Extensions.Configuration;
+using MassTransit;
+using Microsoft.Extensions.Logging;
 
 namespace AI.OfferService.Application.Services;
 
-public class RabbitMQEventPublisher : IEventPublisher, IDisposable
+public class MassTransitEventPublisher : IEventPublisher
 {
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
-    private readonly string _exchangeName = "automotive.exchange";
+    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<MassTransitEventPublisher> _logger;
 
-    public RabbitMQEventPublisher(IConfiguration configuration)
+    public MassTransitEventPublisher(IPublishEndpoint publishEndpoint, ILogger<MassTransitEventPublisher> logger)
     {
-        var factory = new ConnectionFactory
+        _publishEndpoint = publishEndpoint;
+        _logger = logger;
+    }
+
+    public async Task PublishAsync<T>(T eventMessage) where T : class
+    {
+        try
         {
-            HostName = configuration["RabbitMQ:Host"] ?? "localhost",
-            Port = int.Parse(configuration["RabbitMQ:Port"] ?? "5672"),
-            UserName = configuration["RabbitMQ:Username"] ?? "guest",
-            Password = configuration["RabbitMQ:Password"] ?? "guest"
-        };
-
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        
-        // Declare exchange
-        _channel.ExchangeDeclare(_exchangeName, ExchangeType.Topic, durable: true);
-    }
-
-    public Task PublishAsync<T>(T eventMessage, string routingKey) where T : class
-    {
-        var message = JsonConvert.SerializeObject(eventMessage);
-        var body = Encoding.UTF8.GetBytes(message);
-
-        var properties = _channel.CreateBasicProperties();
-        properties.Persistent = true;
-        properties.ContentType = "application/json";
-
-        _channel.BasicPublish(
-            exchange: _exchangeName,
-            routingKey: routingKey,
-            basicProperties: properties,
-            body: body
-        );
-
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        _channel?.Close();
-        _connection?.Close();
+            await _publishEndpoint.Publish(eventMessage);
+            _logger.LogInformation("Published {EventType}", typeof(T).Name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish {EventType}", typeof(T).Name);
+            throw;
+        }
     }
 }
