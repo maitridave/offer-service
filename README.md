@@ -125,10 +125,12 @@ Update the connection string in `AI.OfferService.Api/appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost,1433;Database=OfferServiceDB;User Id=sa;Password=YourPassword;TrustServerCertificate=True;MultipleActiveResultSets=True"
+    "DefaultConnection": "Server=localhost,1433;Database=OfferServiceDB;User Id=offerservice_user;Password=YourSecurePassword123!;TrustServerCertificate=True;MultipleActiveResultSets=True"
   }
 }
 ```
+
+**Note:** For production environments, create a dedicated SQL Server user with minimal required permissions instead of using the `sa` account. Store connection strings securely using environment variables or Azure Key Vault.
 
 #### 3. Set Up the Database
 The application will automatically create the database schema on first run using Entity Framework Core. If you need to create migrations manually:
@@ -231,7 +233,7 @@ docker-compose logs -f
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost,1433;Database=OfferServiceDB;User Id=sa;Password=YourPassword;TrustServerCertificate=True;MultipleActiveResultSets=True"
+    "DefaultConnection": "Server=localhost,1433;Database=OfferServiceDB;User Id=offerservice_user;Password=YourSecurePassword123!;TrustServerCertificate=True;MultipleActiveResultSets=True"
   },
   "RabbitMQ": {
     "Host": "localhost",
@@ -631,8 +633,8 @@ netstat -ano | findstr :5001
 
 ---
 
-**For additional help or to report issues, please open an issue on GitHub.**
+**For additional help or to report issues, please [open an issue on GitHub](https://github.com/maitridave/offer-service/issues).**
 
 **License:** MIT (or specify your license)
 
-**Contributors:** Maitri Dave and contributors
+**Main Contributors:** Maitri Dave
