@@ -1,0 +1,9 @@
+- import: codeql-suites/csharp-security-and-quality.qls
+  from: codeql-csharp
+- queries: '.' 
+  from: peddleon/ped-codeql-library
+- exclude:
+    id:
+    - cs/dereferenced-value-may-be-null
+    - cs/catch-of-all-exceptions
+    - cs/useless-upcast

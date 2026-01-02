@@ -1,0 +1,34 @@
+name: CodeQL
+on: 
+  push:
+    branches:
+     - 'development'
+  pull_request:
+    branches: [ development ]
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'csharp' ]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore
+      run: sed -i "s|</configuration>|<packageSourceCredentials><Github><add key=\"Username\" value=\"${{ secrets.GIT_USER }}\" /><add key=\"ClearTextPassword\" value=\"${{ secrets.GIT_TOKEN }}\" /></Github></packageSourceCredentials></configuration>|" NuGet.Config
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        config-file: ./.github/workflows/codeql/codeql-config.yml  
+        packs: peddleon/ped-codeql-library
+    - name: Build
+      run: dotnet build --configuration Release 
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
