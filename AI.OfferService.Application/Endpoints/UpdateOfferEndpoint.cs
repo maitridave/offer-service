@@ -38,6 +38,7 @@ public class UpdateOfferEndpoint : Endpoint<UpdateOfferRequest, OfferResponse>
         var offer = new Offer
         {
             Id = id,
+            SellerId= req.SellerId ?? existing.SellerId,
             BuyerId = req.BuyerId ?? existing.BuyerId,
             CarrierId = req.CarrierId ?? existing.CarrierId,
             OfferAmount = req.OfferAmount ?? existing.OfferAmount,
